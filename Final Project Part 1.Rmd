@@ -1,0 +1,31 @@
+---
+title: "Final Project Part 1"
+output: pdf_document
+date: "2026-05-18"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Data Cleaning
+
+Rows with empty cells were removed.
+
+```{r}
+library(tidyverse)
+data <- read.csv("Most Streamed Spotify Songs 2024.csv")
+data[data == ""] <- NA
+clean_data <- data %>% drop_na()
+head(data)
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
