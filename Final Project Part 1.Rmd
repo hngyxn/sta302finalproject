@@ -1,7 +1,6 @@
 ---
 title: "Final Project Part 1"
 output: pdf_document
-date: "2026-05-18"
 ---
 
 ```{r setup, include=FALSE}
@@ -15,16 +14,26 @@ Rows with empty cells were removed.
 ```{r}
 library(tidyverse)
 data <- read.csv("Most Streamed Spotify Songs 2024.csv")
+
+#Remove rows with empty cells
 data[data == ""] <- NA
-clean_data <- data %>% drop_na( Track, Album.Name, Artist, Release.Date, ISRC, Spotify.Streams, Spotify.Playlist.Count,  Spotify.Popularity, YouTube.Views, YouTube.Likes, TikTok.Posts, TikTok.Likes, TikTok.Views, YouTube.Playlist.Reach, Explicit.Track)
+clean_data <- data %>% drop_na(Track, Album.Name, Artist, Release.Date, ISRC, Spotify.Streams, Spotify.Playlist.Count,  Spotify.Popularity, YouTube.Views, YouTube.Likes, TikTok.Posts, TikTok.Likes, TikTok.Views, YouTube.Playlist.Reach, Explicit.Track)
+
+#Convert strings into numbers
+cols <- c("Spotify.Streams", "Spotify.Playlist.Count", "Spotify.Playlist.Reach", "YouTube.Views", "YouTube.Likes", "TikTok.Posts", "TikTok.Likes", "TikTok.Views")
+
+clean_data[cols] <- lapply(clean_data[cols], function(x) {
+  x <- gsub(",", "", x)
+  as.numeric(x)
+})
 ```
 
-## Including Plots
+## Residual Plots
 
-You can also embed plots, for example:
+Here are the residual plots. idk edit this text later.
 
-```{r pressure, echo=FALSE}
-plot(pressure)
+```{r}
+fit <- lm(Spotify.Streams ~ Spotify.Playlist.Count + YouTube.Views + YouTube.Likes + TikTok.Posts + TikTok.Likes+ TikTok.Views, data = clean_data)
+plot(fit, which= 1)
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
