@@ -54,8 +54,15 @@ fit <- lm(
     YouTube.Likes + TikTok.Posts + TikTok.Likes + TikTok.Views, 
   data = clean_data
 )
-
-plot(fit, which = 1, sub = "")
-plot(fit, which = 2, sub = "")
 ```
 
+```{r, echo=FALSE}
+plot(fit, which = 1, sub = "")
+```
+
+\
+\vspace{2cm}
+
+```{r, echo=FALSE}
+plot(fit, which = 2, sub = "")
+```
