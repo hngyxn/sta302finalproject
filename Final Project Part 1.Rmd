@@ -9,23 +9,32 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ## Data Cleaning
 
-Rows with empty cells were removed.
+Rows with empty cells were removed. Strings were converted into numbers. Release decade column was added.
 
 ```{r}
 library(tidyverse)
 data <- read.csv("Most Streamed Spotify Songs 2024.csv")
 
-#Remove rows with empty cells
+# Remove rows with empty cells
 data[data == ""] <- NA
 clean_data <- data %>% drop_na(Track, Album.Name, Artist, Release.Date, ISRC, Spotify.Streams, Spotify.Playlist.Count,  Spotify.Popularity, YouTube.Views, YouTube.Likes, TikTok.Posts, TikTok.Likes, TikTok.Views, YouTube.Playlist.Reach, Explicit.Track)
 
-#Convert strings into numbers
+# Convert strings into numbers
 cols <- c("Spotify.Streams", "Spotify.Playlist.Count", "Spotify.Playlist.Reach", "YouTube.Views", "YouTube.Likes", "TikTok.Posts", "TikTok.Likes", "TikTok.Views")
 
 clean_data[cols] <- lapply(clean_data[cols], function(x) {
   x <- gsub(",", "", x)
   as.numeric(x)
 })
+
+# Add release decade column 
+clean_data$Release.Date <- as.Date(clean_data$Release.Date, format = "%m/%d/%Y")
+clean_data$Release.Year <- as.numeric(format(clean_data$Release.Date, "%Y"))
+clean_data$Release.Decade <- cut(
+  clean_data$Release.Year,
+  breaks = c(1900, 2009, 2019, 2029),
+  labels = c("Pre-2010s", "2010s", "2020s")
+)
 ```
 
 ## Residual Plots
@@ -34,6 +43,7 @@ Here are the residual plots. idk edit this text later.
 
 ```{r}
 fit <- lm(Spotify.Streams ~ Spotify.Playlist.Count + YouTube.Views + YouTube.Likes + TikTok.Posts + TikTok.Likes+ TikTok.Views, data = clean_data)
-plot(fit, which= 1)
+plot(fit, which = 1)
+plot(fit, which = 2)
 ```
 
