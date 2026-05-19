@@ -11,16 +11,23 @@ knitr::opts_chunk$set(echo = TRUE)
 
 Rows with empty cells were removed. Strings were converted into numbers. Release decade column was added.
 
-```{r}
+```{r, message=FALSE, warning=FALSE}
 library(tidyverse)
 data <- read.csv("Most Streamed Spotify Songs 2024.csv")
 
 # Remove rows with empty cells
 data[data == ""] <- NA
-clean_data <- data %>% drop_na(Track, Album.Name, Artist, Release.Date, ISRC, Spotify.Streams, Spotify.Playlist.Count,  Spotify.Popularity, YouTube.Views, YouTube.Likes, TikTok.Posts, TikTok.Likes, TikTok.Views, YouTube.Playlist.Reach, Explicit.Track)
+clean_data <- data %>% drop_na(Track, Album.Name, Artist, Release.Date, ISRC, 
+                               Spotify.Streams, Spotify.Playlist.Count,
+                               Spotify.Popularity, YouTube.Views, YouTube.Likes,
+                               TikTok.Posts,TikTok.Likes, 
+                               TikTok.Views, YouTube.Playlist.Reach,
+                               Explicit.Track)
 
 # Convert strings into numbers
-cols <- c("Spotify.Streams", "Spotify.Playlist.Count", "Spotify.Playlist.Reach", "YouTube.Views", "YouTube.Likes", "TikTok.Posts", "TikTok.Likes", "TikTok.Views")
+cols <- c("Spotify.Streams", "Spotify.Playlist.Count", "Spotify.Playlist.Reach",
+          "YouTube.Views", "YouTube.Likes", "TikTok.Posts",
+          "TikTok.Likes", "TikTok.Views")
 
 clean_data[cols] <- lapply(clean_data[cols], function(x) {
   x <- gsub(",", "", x)
@@ -42,8 +49,13 @@ clean_data$Release.Decade <- cut(
 Here are the residual plots. idk edit this text later.
 
 ```{r}
-fit <- lm(Spotify.Streams ~ Spotify.Playlist.Count + YouTube.Views + YouTube.Likes + TikTok.Posts + TikTok.Likes+ TikTok.Views, data = clean_data)
-plot(fit, which = 1)
-plot(fit, which = 2)
+fit <- lm(
+  Spotify.Streams ~ Spotify.Playlist.Count + YouTube.Views + 
+    YouTube.Likes + TikTok.Posts + TikTok.Likes + TikTok.Views, 
+  data = clean_data
+)
+
+plot(fit, which = 1, sub = "")
+plot(fit, which = 2, sub = "")
 ```
 
