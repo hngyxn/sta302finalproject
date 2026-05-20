@@ -66,3 +66,43 @@ plot(fit, which = 1, sub = "")
 ```{r, echo=FALSE}
 plot(fit, which = 2, sub = "")
 ```
+## Statistical Summary Table
+
+# Summary stats for numeric variables
+numeric_stats <- data.frame(
+  Variable = c("Spotify Streams (Millions)", "YouTube Views (Millions)",
+               "YouTube Likes (Millions)", "TikTok Posts (Thousands)",
+               "TikTok Likes (Millions)", "TikTok Views (Millions)"),
+  Mean   = sapply(summary_data[1:6], function(x) round(mean(x, na.rm=T), 2)),
+  SD     = sapply(summary_data[1:6], function(x) round(sd(x, na.rm=T), 2)),
+  Median = sapply(summary_data[1:6], function(x) round(median(x, na.rm=T), 2)),
+  Min    = sapply(summary_data[1:6], function(x) round(min(x, na.rm=T), 2)),
+  P25    = sapply(summary_data[1:6], function(x) round(quantile(x, 0.25, na.rm=T), 2)),
+  P75    = sapply(summary_data[1:6], function(x) round(quantile(x, 0.75, na.rm=T), 2)),
+  Max    = sapply(summary_data[1:6], function(x) round(max(x, na.rm=T), 2))
+)
+
+# Summary stats for Release Decade
+decade_counts <- as.data.frame(table(summary_data$Release.Decade))
+decade_rows <- data.frame(
+  Variable = paste0("Release Decade: ", decade_counts$Var1),
+  Mean   = paste0(round(decade_counts$Freq / nrow(summary_data) * 100, 1), "%"),
+  SD     = "",
+  Median = "",
+  Min    = "",
+  P25    = "",
+  P75    = "",
+  Max    = ""
+)
+
+# Combine
+full_table <- rbind(numeric_stats, decade_rows)
+
+full_table %>%
+  kable("html", row.names = FALSE,
+        col.names = c("Variable", "Mean", "Std. Dev.", "Median", "Min", "Pctl. 25", "Pctl. 75", "Max")) %>%
+  kable_styling(font_size = 13, full_width = TRUE) %>%
+  row_spec(0, bold = TRUE, extra_css = "border-top: 2px solid black; border-bottom: 2px solid black; font-family: 'Times New Roman', Times, serif;") %>%
+  row_spec(nrow(full_table), extra_css = "border-bottom: 2px solid black;") %>%
+  column_spec(1:8, extra_css = "font-family: 'Times New Roman', Times, serif; padding: 6px 10px;") %>%
+  save_kable("summary_table.html")
