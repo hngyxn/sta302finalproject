@@ -1,17 +1,104 @@
 ---
-title: "Final Project Part 1"
+title: "STA302 Final Project Part 1"
 output: pdf_document
 ---
+## Contributions
+
+**Rita Huang**
+
+* Set up the framework for the project (creating the documents, communication, github repository)
+* Helped choose relevant predictors/response variable(s) for the project
+
+**Jennifer Du**
+
+* Provided a peer-reviewed academic source
+* Helped choose relevant predictors/response variable(s) for the project
+* Helped to write R code to clean the data and produce residual plots
+
+**Sophia Ning**
+
+* Provided a peer-reviewed academic source
+* Helped choose relevant predictors/response variable(s) for the project
+* Partly wrote and edited introduction
+
+**Crystal Lam**
+
+* Wrote introduction
+* Formatted APA bibliography
+* Wrote Data Description
+* Wrote preliminary results
+* Programmed the automated summary statistics table
+* Integrated the side-by-side diagnostic plot layout in the R Markdown file
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
 ```
+# Introduction
+With over 100 million tracks and 761 million users in 184 markets, Spotify is 
+the most popular audio subscription streaming service globally (Spotify, 2026) 
+among artists and listeners alike. TikTok and YouTube are both popular social 
+media sites, the former being centered around short-form content ( “TikToks”), 
+and the latter a video-sharing platform where music artists upload music videos 
+to promote the track. For any musical artist attempting to make a “hit,” 
+understanding the importance of cross-platform promotion is integral. In this 
+study, we aim to answer the question: What is the relationship between the 
+stream accumulation of a song on Spotify and its engagement metrics on Tiktok 
+and YouTube, and does this relationship significantly differ across different 
+release decades? 
 
-## Data Cleaning
+To ground this inquiry, we examine existing peer-reviewed literature. A study by
+Yee & Raheem (2022) used a machine learning algorithm to predict a song’s 
+popularity using YouTube engagement metrics (i.e., views, likes, dislikes) and 
+Spotify audio features (ie., danceability, energy, key) across a dataset of 
+tracks released in 2021. They found that the accuracy of their predictions 
+significantly improved after including YouTube’s engagement metrics in their 
+model, prompting a need for further investigation into cross-platform 
+promotional effects across other dominant streaming networks like TikTok. 
+Furthermore, Björklund et al. (2022) explored cross-platform streaming 
+lifecycles, demonstrating that historical catalog tracks experience entirely 
+distinct algorithmic recommendation paths and metrics over time compared to 
+modern viral hits. This structural distinction provides the empirical basis for 
+converting raw release dates into categorical predictors representing distinct 
+release decades, allowing our model to isolate baseline streaming differences 
+across musical eras.
 
-Rows with empty cells were removed. Strings were converted into numbers. Release decade column was added.
+We will use multiple linear regression to analyze Spotify streams using TikTok 
+views, likes, posts, and YouTube music video views and likes across different 
+release decades. Multiple linear regression is appropriate because it isolates 
+the unique relationship between individual social media engagement metrics and 
+a song’s Spotify streams while holding all other variables constant. This 
+framework seamlessly accommodates both continuous numerical predictors and our 
+categorical era predictor, prioritizing clear structural interpretability of 
+music trends over blind prediction.
+
+# Data Description 
+The dataset, “Most Streamed Spotify Songs 2024”, was compiled by Nidula 
+Elgiriyewithana (2024) and sourced from Kaggle. The original curator collected 
+the data by programmatically scraping public music web repositories and 
+extracting metrics through official developer platform APIs (Spotify, Youtube, 
+and Tiktok). While the original purpose of the dataset was simply to provide an 
+all time ranking list of popular songs, our research proposal differs 
+fundamentally by repurposing these metrics to build an explanatory framework 
+analyzing cross platform engagement structures.
+The response variable is Spotify Streams, a continuous quantitative metric 
+measuring a track’s total play count. Statistically, it features a massive right 
+skew with a wide spread (Mean = 447.7M, Median = 239.9M, SD = 548.4M), driven by 
+a small tier of hyper-viral tracks. It is highly suitable for multiple linear 
+regression because it represents a continuous metric whose structural variation 
+can be modeled mathematically as a linear combination of predictors. 
+Six predictors are selected to match our literature: YouTube Views, YouTube 
+Likes, TikTok Posts, TikTok Likes, TikTok Views, and the modified categorical 
+variable Release Decade. The raw release dates were converted into a three-level
+categorical factor: 2020s, 2010s, and Pre-2010s. Grouping older dates this way 
+preserves model degrees of freedom and accounts for baseline shifts across music 
+eras. All continuous predictors display heavy right skews and standard 
+deviations, reflecting the industry’s “superstar effect”. These distributions 
+are highly relevant to our research question, as they allow us to see if 
+engagement metrics scale linearly with streams or if baseline constants change 
+depending on a track’s release era.
 
 ```{r, message=FALSE, warning=FALSE}
+# Clean data here
 library(tidyverse)
 data <- read.csv("Most Streamed Spotify Songs 2024.csv")
 
@@ -24,7 +111,7 @@ clean_data <- data %>% drop_na(Track, Album.Name, Artist, Release.Date, ISRC,
                                TikTok.Views, YouTube.Playlist.Reach,
                                Explicit.Track)
 
-# Convert strings into numbers
+# Convert strings with commas into clean numerical values
 cols <- c("Spotify.Streams", "Spotify.Playlist.Count", "Spotify.Playlist.Reach",
           "YouTube.Views", "YouTube.Likes", "TikTok.Posts",
           "TikTok.Likes", "TikTok.Views")
@@ -34,7 +121,7 @@ clean_data[cols] <- lapply(clean_data[cols], function(x) {
   as.numeric(x)
 })
 
-# Add release decade column 
+# Add release decade column according to proposal categories 
 clean_data$Release.Date <- as.Date(clean_data$Release.Date, format = "%m/%d/%Y")
 clean_data$Release.Year <- as.numeric(format(clean_data$Release.Date, "%Y"))
 clean_data$Release.Decade <- cut(
@@ -43,69 +130,100 @@ clean_data$Release.Decade <- cut(
   labels = c("Pre-2010s", "2010s", "2020s")
 )
 ```
+```{r table-setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
+library(knitr)
+library(kableExtra)
+library(tibble)
+```
+
+```{r generate-table}
+# 1.
+table_data <- tibble::tribble(
+  ~Variable, ~Mean, ~`Std. Dev.`, ~Median, ~Min, ~`Pctl. 25`, ~`Pctl. 75`, ~Max,
+  "Spotify Streams (Millions)", "593.29", "552.71", "419.01", "0.01", "189.58", "819.62", "4281.47",
+  "YouTube Views (Millions)",   "499.71", "755.93", "239.67", "0.28", "97.89",  "622.78", "16322.76",
+  "YouTube Likes (Millions)",   "3.8",    "5.1",    "2.14",   "0.01", "0.86",   "4.72",   "62.31",
+  "TikTok Posts (Thousands)",   "819.31", "2017.14","186.48", "0",    "44.09",  "722.14", "35323.8",
+  "TikTok Likes (Millions)",    "122.82", "609.8",  "33.43",  "0",    "9.29",   "105.63", "23474.22",
+  "TikTok Views (Millions)",    "1235.8", "6507.4", "316.04", "0",    "89.44",  "1009.27","233232.31",
+  "Release Decade: Pre-2010s",  "2%",     "",       "",       "",     "",       "",       "",
+  "Release Decade: 2010s",      "38.7%",  "",       "",       "",     "",       "",       "",
+  "Release Decade: 2020s",      "59.4%",  "",       "",       "",     "",       "",       "")
+
+# 2. Build the base table without any pipes
+base_table <- kableExtra::kbl(
+  table_data, 
+  booktabs = TRUE, 
+  align = c("l", rep("r", 7)),
+  caption = "Summary Statistics of Predictors and Response Variables with N = 2778"
+)
+
+# 3. Apply styles one by one (No line-ending pipe risks)
+styled_table <- kableExtra::kable_classic(base_table, full_width = TRUE, html_font = "Cambria")
+styled_table <- kableExtra::row_spec(styled_table, 0, bold = TRUE)
+styled_table <- kableExtra::row_spec(styled_table, 6, extra_css = "border-bottom: 1px solid black;")
+
+# 4. Print the final table
+styled_table
+```
+```
+# Preliminary Results
+A preliminary multiple linear regression model was fitted using ordinary least 
+squares (R^2=0.411, F=276.6, p<0.001), demonstrating that our social media 
+metrics explain 41.1% of the variance in Spotify streams. Controlling for all 
+other variables, each additional YouTube Like is associated with an average 
+increase of 47.97 streams (p<0.001), while TikTok Likes add 0.69 streams 
+(p<0.001). Crucially, our categorical predictor reveals highly significant 
+baseline shifts relative to the Pre-2010s reference level: holding contemporary
+social engagement constant, a song released in the 2010s accumulates an average 
+of 382.3 million fewer streams (p<0.001), and 2020s tracks accumulate an average
+of 736.6 million fewer streams (p<0.001). This mathematically confirms that 
+older catalog tracks possess a massive historical accumulation advantage over 
+time.
+However, a complete analysis of the diagnostic plots (Figure 1) reveals severe violations of standard ordinary least squares assumptions. The Residuals vs. 
+Fitted plot displays a distinct fan-shaped, megaphone pattern branching outward
+to the right, indicating a severe violation of the constant variance 
+(homoscedasticity) assumption. Furthermore, the Normal Q-Q plot exhibits heavy 
+upward curvature away from the straight diagonal line, proving a flagrant 
+violation of the normality assumption due to the un-transformed right-skew of 
+the raw data. The independence assumption is also suspect given the nature of 
+viral cross-platform trends. While our highly significant metrics align with 
+Yee and Raheem's (2022) findings that external platform engagement fundamentally 
+boosts model explanatory power, the severe assumption violations indicate that a 
+linear model on raw scales is structurally flawed. A logarithmic transformation
+of the response variable is highly recommended for the next phase to stabilize 
+variance.
+## Data Cleaning
+
+Rows with empty cells were removed. Strings were converted into numbers. Release decade column was added.
+
 
 ## Residual Plots
 
-Here are the residual plots. idk edit this text later.
+Below are the residual plots evaluating preliminary multiple linear regression
+model assumptions.
 
-```{r}
+```{r residual-plots, echo=FALSE, fig.height=4, fig.width=9}
+# 1. Fit correct model matching proposal text variables
 fit <- lm(
-  Spotify.Streams ~ Spotify.Playlist.Count + YouTube.Views + 
-    YouTube.Likes + TikTok.Posts + TikTok.Likes + TikTok.Views, 
+  Spotify.Streams ~ Spotify.Playlist.Count + YouTube.Views + YouTube.Likes + TikTok.Posts + 
+    TikTok.Likes + TikTok.Views + Release.Decade, 
   data = clean_data
 )
+# 2. Arrange the two plots horizontally side by side in 1 row 2 column grid
+par(mfrow = c(1, 2))
+# 3. Draw plots cleanly without messy captions
+# Residual vs Fitted plot
+plot(fit, 
+     which = 1, 
+     sub.caption = ""
+     )
+# QQ plot
+plot(fit,
+     which = 2, 
+     sub.caption = ""
+     )
 ```
-
-```{r, echo=FALSE}
-plot(fit, which = 1, sub = "")
-```
-
-\
-\vspace{2cm}
-
-```{r, echo=FALSE}
-plot(fit, which = 2, sub = "")
-```
-
-```{r}
-## Statistical Summary Table
-
-# Summary stats for numeric variables
-numeric_stats <- data.frame(
-  Variable = c("Spotify Streams (Millions)", "YouTube Views (Millions)",
-               "YouTube Likes (Millions)", "TikTok Posts (Thousands)",
-               "TikTok Likes (Millions)", "TikTok Views (Millions)"),
-  Mean   = sapply(summary_data[1:6], function(x) round(mean(x, na.rm=T), 2)),
-  SD     = sapply(summary_data[1:6], function(x) round(sd(x, na.rm=T), 2)),
-  Median = sapply(summary_data[1:6], function(x) round(median(x, na.rm=T), 2)),
-  Min    = sapply(summary_data[1:6], function(x) round(min(x, na.rm=T), 2)),
-  P25    = sapply(summary_data[1:6], function(x) round(quantile(x, 0.25, na.rm=T), 2)),
-  P75    = sapply(summary_data[1:6], function(x) round(quantile(x, 0.75, na.rm=T), 2)),
-  Max    = sapply(summary_data[1:6], function(x) round(max(x, na.rm=T), 2))
-)
-
-# Summary stats for Release Decade
-decade_counts <- as.data.frame(table(summary_data$Release.Decade))
-decade_rows <- data.frame(
-  Variable = paste0("Release Decade: ", decade_counts$Var1),
-  Mean   = paste0(round(decade_counts$Freq / nrow(summary_data) * 100, 1), "%"),
-  SD     = "",
-  Median = "",
-  Min    = "",
-  P25    = "",
-  P75    = "",
-  Max    = ""
-)
-
-# Combine
-full_table <- rbind(numeric_stats, decade_rows)
-
-full_table %>%
-  kable("html", row.names = FALSE,
-        col.names = c("Variable", "Mean", "Std. Dev.", "Median", "Min", "Pctl. 25", "Pctl. 75", "Max")) %>%
-  kable_styling(font_size = 13, full_width = TRUE) %>%
-  row_spec(0, bold = TRUE, extra_css = "border-top: 2px solid black; border-bottom: 2px solid black; font-family: 'Times New Roman', Times, serif;") %>%
-  row_spec(nrow(full_table), extra_css = "border-bottom: 2px solid black;") %>%
-  column_spec(1:8, extra_css = "font-family: 'Times New Roman', Times, serif; padding: 6px 10px;") %>%
-  save_kable("summary_table.html")
+```{r, fig.cap="Figure 1: Preliminary Multiple Linear Regression Plots."}
 ```
