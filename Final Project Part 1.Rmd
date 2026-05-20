@@ -8,6 +8,8 @@ output: pdf_document
 
 * Set up the framework for the project (creating the documents, communication, github repository)
 * Helped choose relevant predictors/response variable(s) for the project
+* Helped format and write R code and work on the preliminary results section
+* Proofread entire proposal and fixed errors
 
 **Jennifer Du**
 
@@ -25,7 +27,7 @@ output: pdf_document
 
 * Wrote introduction
 * Formatted APA bibliography
-* Wrote Data Description
+* Wrote data description
 * Wrote preliminary results
 * Programmed the automated summary statistics table
 * Integrated the side-by-side diagnostic plot layout in the R Markdown file
@@ -33,6 +35,9 @@ output: pdf_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
 ```
+
+\newpage
+
 # Introduction
 With over 100 million tracks and 761 million users in 184 markets, Spotify is 
 the most popular audio subscription streaming service globally (Spotify, 2026) 
@@ -83,7 +88,7 @@ analyzing cross platform engagement structures.
 The response variable is Spotify Streams, a continuous quantitative metric 
 measuring a track’s total play count. Statistically, it features a massive right 
 skew with a wide spread (Mean = 447.7M, Median = 239.9M, SD = 548.4M), driven by 
-a small tier of hyper-viral tracks. It is highly suitable for multiple linear 
+a small tier of hyper-viral tracks. However, it is suitable for multiple linear 
 regression because it represents a continuous metric whose structural variation 
 can be modeled mathematically as a linear combination of predictors. 
 Six predictors are selected to match our literature: YouTube Views, YouTube 
@@ -92,7 +97,7 @@ variable Release Decade. The raw release dates were converted into a three-level
 categorical factor: 2020s, 2010s, and Pre-2010s. Grouping older dates this way 
 preserves model degrees of freedom and accounts for baseline shifts across music 
 eras. All continuous predictors display heavy right skews and standard 
-deviations, reflecting the industry’s “superstar effect”. These distributions 
+deviations, reflecting the industry’s tendency to produce viral hits. These distributions 
 are highly relevant to our research question, as they allow us to see if 
 engagement metrics scale linearly with streams or if baseline constants change 
 depending on a track’s release era.
@@ -137,6 +142,11 @@ library(kableExtra)
 library(tibble)
 ```
 
+## Data Cleaning
+
+Rows with empty cells were removed. Strings were converted into numbers. Release decade column was added.
+
+
 ```{r generate-table}
 # 1.
 table_data <- tibble::tribble(
@@ -167,20 +177,12 @@ styled_table <- kableExtra::row_spec(styled_table, 6, extra_css = "border-bottom
 # 4. Print the final table
 styled_table
 ```
-```
+
+\newpage
+
 # Preliminary Results
 A preliminary multiple linear regression model was fitted using ordinary least 
-squares (R^2=0.411, F=276.6, p<0.001), demonstrating that our social media 
-metrics explain 41.1% of the variance in Spotify streams. Controlling for all 
-other variables, each additional YouTube Like is associated with an average 
-increase of 47.97 streams (p<0.001), while TikTok Likes add 0.69 streams 
-(p<0.001). Crucially, our categorical predictor reveals highly significant 
-baseline shifts relative to the Pre-2010s reference level: holding contemporary
-social engagement constant, a song released in the 2010s accumulates an average 
-of 382.3 million fewer streams (p<0.001), and 2020s tracks accumulate an average
-of 736.6 million fewer streams (p<0.001). This mathematically confirms that 
-older catalog tracks possess a massive historical accumulation advantage over 
-time.
+squares (R^2=0.411, F=276.6, p<0.001), emonstrating that our social media metrics explain 41.1% of the variance in Spotify streams. All predictors in the model were highly statistically significant (p<0.001). Controlling for all other variables, each additional million YouTube Likes is associated with an average increase of 47.97 million streams, while an additional million TikTok Likes adds 0.69 million streams. Crucially, our categorical predictor reveals substantial baseline shifts relative to the Pre-2010s reference level: holding contemporary social engagement constant, a song released in the 2010s accumulates an average of 382.3 million fewer streams, and 2020s tracks accumulate an average of 736.6 million fewer streams. This mathematically confirms that older catalog tracks possess a massive historical accumulation advantage over time.
 However, a complete analysis of the diagnostic plots (Figure 1) reveals severe violations of standard ordinary least squares assumptions. The Residuals vs. 
 Fitted plot displays a distinct fan-shaped, megaphone pattern branching outward
 to the right, indicating a severe violation of the constant variance 
@@ -194,9 +196,7 @@ boosts model explanatory power, the severe assumption violations indicate that a
 linear model on raw scales is structurally flawed. A logarithmic transformation
 of the response variable is highly recommended for the next phase to stabilize 
 variance.
-## Data Cleaning
 
-Rows with empty cells were removed. Strings were converted into numbers. Release decade column was added.
 
 
 ## Residual Plots
