@@ -66,6 +66,8 @@ plot(fit, which = 1, sub = "")
 ```{r, echo=FALSE}
 plot(fit, which = 2, sub = "")
 ```
+
+```{r}
 ## Statistical Summary Table
 
 # Summary stats for numeric variables
@@ -106,3 +108,4 @@ full_table %>%
   row_spec(nrow(full_table), extra_css = "border-bottom: 2px solid black;") %>%
   column_spec(1:8, extra_css = "font-family: 'Times New Roman', Times, serif; padding: 6px 10px;") %>%
   save_kable("summary_table.html")
+```
