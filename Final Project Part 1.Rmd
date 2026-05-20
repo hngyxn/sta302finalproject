@@ -207,7 +207,7 @@ model assumptions.
 ```{r residual-plots, echo=FALSE, fig.height=4, fig.width=9}
 # 1. Fit correct model matching proposal text variables
 fit <- lm(
-  Spotify.Streams ~ Spotify.Playlist.Count + YouTube.Views + YouTube.Likes + TikTok.Posts + 
+  Spotify.Streams ~ YouTube.Views + YouTube.Likes + TikTok.Posts + 
     TikTok.Likes + TikTok.Views + Release.Decade, 
   data = clean_data
 )
