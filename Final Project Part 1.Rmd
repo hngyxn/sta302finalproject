@@ -84,6 +84,7 @@ styled_table <- kableExtra::row_spec(styled_table, 6, extra_css = "border-bottom
 styled_table
 ```
 
+
 ## Residual Plots
 
 Below are the residual plots evaluating preliminary multiple linear regression
@@ -92,10 +93,15 @@ model assumptions.
 ```{r residual-plots, echo=FALSE, fig.height=4, fig.width=9}
 # 1. Fit correct model matching proposal text variables
 fit <- lm(
-  Spotify.Streams ~ YouTube.Views + YouTube.Likes + TikTok.Posts + 
-    TikTok.Likes + TikTok.Views + Release.Decade, 
+  Spotify.Streams ~
+    YouTube.Views  * Release.Decade +
+    YouTube.Likes  * Release.Decade +
+    TikTok.Posts   * Release.Decade +
+    TikTok.Likes   * Release.Decade +
+    TikTok.Views   * Release.Decade, 
   data = clean_data
 )
+summary(fit) # Get intercept/coefficients
 # 2. Arrange the two plots horizontally side by side in 1 row 2 column grid
 par(mfrow = c(1, 2))
 # 3. Draw plots cleanly without messy captions
@@ -109,8 +115,9 @@ plot(fit,
      which = 2, 
      sub.caption = ""
      )
+```
 
-# Residual vs Predictor plots
+```{r residual-plots-2, echo=FALSE, fig.height=6, fig.width=9, fig.align="center", fig.pos="H"}
 residuals_fit <- residuals(fit)
 predictors <- list(
   "YouTube Views"  = clean_data$YouTube.Views,
@@ -137,7 +144,6 @@ for (name in names(predictors)) {
   lines(lowess(x, residuals_fit), col = "red", lwd = 1.5)
 }
 
-# Histogram plot
 hist(
   residuals_fit,
   breaks = 50,
