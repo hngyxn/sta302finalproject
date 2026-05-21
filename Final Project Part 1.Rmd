@@ -225,5 +225,44 @@ plot(fit,
      sub.caption = ""
      )
 ```
+
+```{r residual-plots-2, echo=FALSE, fig.height=6, fig.width=9, fig.align="center", fig.pos="H"}
+residuals_fit <- residuals(fit)
+predictors <- list(
+  "YouTube Views"  = clean_data$YouTube.Views,
+  "YouTube Likes"  = clean_data$YouTube.Likes,
+  "TikTok Posts"   = clean_data$TikTok.Posts,
+  "TikTok Likes"   = clean_data$TikTok.Likes,
+  "TikTok Views"   = clean_data$TikTok.Views
+)
+
+par(mfrow = c(2, 3))
+
+for (name in names(predictors)) {
+  x <- predictors[[name]]
+  plot(
+    x, residuals_fit,
+    main  = paste("Residuals vs\n", name),
+    xlab  = name,
+    ylab  = "Residuals",
+    pch   = 20,
+    cex   = 0.5,
+    col   = rgb(0, 0, 0, 0.3)
+  )
+  abline(h = 0, col = "gray", lwd = 1, lty = 2)
+  lines(lowess(x, residuals_fit), col = "red", lwd = 1.5)
+}
+
+hist(
+  residuals_fit,
+  breaks = 50,
+  main   = "Histogram of Residuals",
+  xlab   = "Residuals",
+  col    = "lightgray",
+  border = "white"
+)
+abline(v = 0, col = "red", lwd = 2, lty = 2)
+```
+
 ```{r, fig.cap="Figure 1: Preliminary Multiple Linear Regression Plots."}
 ```
