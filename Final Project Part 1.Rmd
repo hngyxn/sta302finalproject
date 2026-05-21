@@ -1,3 +1,116 @@
+---
+title: "STA302 Final Project Part 1"
+output: pdf_document
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
+```
+
+
+```{r, message=FALSE, warning=FALSE}
+# Clean data here
+library(tidyverse)
+data <- read.csv("Most Streamed Spotify Songs 2024.csv")
+
+# Remove rows with empty cells
+data[data == ""] <- NA
+clean_data <- data %>% drop_na(Track, Album.Name, Artist, Release.Date, ISRC, 
+                               Spotify.Streams, Spotify.Playlist.Count,
+                               Spotify.Popularity, YouTube.Views, YouTube.Likes,
+                               TikTok.Posts,TikTok.Likes, 
+                               TikTok.Views, YouTube.Playlist.Reach,
+                               Explicit.Track)
+
+# Convert strings with commas into clean numerical values
+cols <- c("Spotify.Streams", "Spotify.Playlist.Count", "Spotify.Playlist.Reach",
+          "YouTube.Views", "YouTube.Likes", "TikTok.Posts",
+          "TikTok.Likes", "TikTok.Views")
+
+clean_data[cols] <- lapply(clean_data[cols], function(x) {
+  x <- gsub(",", "", x)
+  as.numeric(x)
+})
+
+# Add release decade column according to proposal categories 
+clean_data$Release.Date <- as.Date(clean_data$Release.Date, format = "%m/%d/%Y")
+clean_data$Release.Year <- as.numeric(format(clean_data$Release.Date, "%Y"))
+clean_data$Release.Decade <- cut(
+  clean_data$Release.Year,
+  breaks = c(1900, 2009, 2019, 2029),
+  labels = c("Pre-2010s", "2010s", "2020s")
+)
+```
+```{r table-setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
+library(knitr)
+library(kableExtra)
+library(tibble)
+```
+
+## Data Cleaning
+
+Rows with empty cells were removed. Strings were converted into numbers. Release decade column was added.
+
+```{r generate-table}
+# 1.
+table_data <- tibble::tribble(
+  ~Variable, ~Mean, ~`Std. Dev.`, ~Median, ~Min, ~`Pctl. 25`, ~`Pctl. 75`, ~Max,
+  "Spotify Streams (Millions)", "593.29", "552.71", "419.01", "0.01", "189.58", "819.62", "4281.47",
+  "YouTube Views (Millions)",   "499.71", "755.93", "239.67", "0.28", "97.89",  "622.78", "16322.76",
+  "YouTube Likes (Millions)",   "3.8",    "5.1",    "2.14",   "0.01", "0.86",   "4.72",   "62.31",
+  "TikTok Posts (Thousands)",   "819.31", "2017.14","186.48", "0",    "44.09",  "722.14", "35323.8",
+  "TikTok Likes (Millions)",    "122.82", "609.8",  "33.43",  "0",    "9.29",   "105.63", "23474.22",
+  "TikTok Views (Millions)",    "1235.8", "6507.4", "316.04", "0",    "89.44",  "1009.27","233232.31",
+  "Release Decade: Pre-2010s",  "2%",     "",       "",       "",     "",       "",       "",
+  "Release Decade: 2010s",      "38.7%",  "",       "",       "",     "",       "",       "",
+  "Release Decade: 2020s",      "59.4%",  "",       "",       "",     "",       "",       "")
+
+# 2. Build the base table without any pipes
+base_table <- kableExtra::kbl(
+  table_data, 
+  booktabs = TRUE, 
+  align = c("l", rep("r", 7)),
+  caption = "Summary Statistics of Predictors and Response Variables with N = 2778"
+)
+
+# 3. Apply styles one by one (No line-ending pipe risks)
+styled_table <- kableExtra::kable_classic(base_table, full_width = TRUE, html_font = "Cambria")
+styled_table <- kableExtra::row_spec(styled_table, 0, bold = TRUE)
+styled_table <- kableExtra::row_spec(styled_table, 6, extra_css = "border-bottom: 1px solid black;")
+
+# 4. Print the final table
+styled_table
+```
+
+## Residual Plots
+
+Below are the residual plots evaluating preliminary multiple linear regression
+model assumptions.
+
+```{r residual-plots, echo=FALSE, fig.height=4, fig.width=9}
+# 1. Fit correct model matching proposal text variables
+fit <- lm(
+  Spotify.Streams ~ YouTube.Views + YouTube.Likes + TikTok.Posts + 
+    TikTok.Likes + TikTok.Views + Release.Decade, 
+  data = clean_data
+)
+# 2. Arrange the two plots horizontally side by side in 1 row 2 column grid
+par(mfrow = c(1, 2))
+# 3. Draw plots cleanly without messy captions
+# Residual vs Fitted plot
+plot(fit, 
+     which = 1, 
+     sub.caption = ""
+     )
+# QQ plot
+plot(fit,
+     which = 2, 
+     sub.caption = ""
+     )
+```
+
 ```{r residual-plots-2, echo=FALSE, fig.height=6, fig.width=9, fig.align="center", fig.pos="H"}
 residuals_fit <- residuals(fit)
 predictors <- list(
