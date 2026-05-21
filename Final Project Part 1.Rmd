@@ -1,84 +1,37 @@
----
-title: "STA302 Final Project Part 1"
-output: pdf_document
----
-
-
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
-```
-
-
-```{r, message=FALSE, warning=FALSE}
-# Clean data here
-library(tidyverse)
-data <- read.csv("Most Streamed Spotify Songs 2024.csv")
-
-# Remove rows with empty cells
-data[data == ""] <- NA
-clean_data <- data %>% drop_na(Track, Album.Name, Artist, Release.Date, ISRC, 
-                               Spotify.Streams, Spotify.Playlist.Count,
-                               Spotify.Popularity, YouTube.Views, YouTube.Likes,
-                               TikTok.Posts,TikTok.Likes, 
-                               TikTok.Views, YouTube.Playlist.Reach,
-                               Explicit.Track)
-
-# Convert strings with commas into clean numerical values
-cols <- c("Spotify.Streams", "Spotify.Playlist.Count", "Spotify.Playlist.Reach",
-          "YouTube.Views", "YouTube.Likes", "TikTok.Posts",
-          "TikTok.Likes", "TikTok.Views")
-
-clean_data[cols] <- lapply(clean_data[cols], function(x) {
-  x <- gsub(",", "", x)
-  as.numeric(x)
-})
-
-# Add release decade column according to proposal categories 
-clean_data$Release.Date <- as.Date(clean_data$Release.Date, format = "%m/%d/%Y")
-clean_data$Release.Year <- as.numeric(format(clean_data$Release.Date, "%Y"))
-clean_data$Release.Decade <- cut(
-  clean_data$Release.Year,
-  breaks = c(1900, 2009, 2019, 2029),
-  labels = c("Pre-2010s", "2010s", "2020s")
+```{r residual-plots-2, echo=FALSE, fig.height=6, fig.width=9, fig.align="center", fig.pos="H"}
+residuals_fit <- residuals(fit)
+predictors <- list(
+  "YouTube Views"  = clean_data$YouTube.Views,
+  "YouTube Likes"  = clean_data$YouTube.Likes,
+  "TikTok Posts"   = clean_data$TikTok.Posts,
+  "TikTok Likes"   = clean_data$TikTok.Likes,
+  "TikTok Views"   = clean_data$TikTok.Views
 )
-```
-```{r table-setup, include=FALSE}
-knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
-library(knitr)
-library(kableExtra)
-library(tibble)
-```
 
-## Data Cleaning
+par(mfrow = c(2, 3))
 
-Rows with empty cells were removed. Strings were converted into numbers. Release decade column was added.
+for (name in names(predictors)) {
+  x <- predictors[[name]]
+  plot(
+    x, residuals_fit,
+    main  = paste("Residuals vs\n", name),
+    xlab  = name,
+    ylab  = "Residuals",
+    pch   = 20,
+    cex   = 0.5,
+    col   = rgb(0, 0, 0, 0.3)
+  )
+  abline(h = 0, col = "gray", lwd = 1, lty = 2)
+  lines(lowess(x, residuals_fit), col = "red", lwd = 1.5)
+}
 
-
-## Residual Plots
-
-Below are the residual plots evaluating preliminary multiple linear regression
-model assumptions.
-
-```{r residual-plots, echo=FALSE, fig.height=4, fig.width=9}
-# 1. Fit correct model matching proposal text variables
-fit <- lm(
-  Spotify.Streams ~ YouTube.Views + YouTube.Likes + TikTok.Posts + 
-    TikTok.Likes + TikTok.Views + Release.Decade, 
-  data = clean_data
+hist(
+  residuals_fit,
+  breaks = 50,
+  main   = "Histogram of Residuals",
+  xlab   = "Residuals",
+  col    = "lightgray",
+  border = "white"
 )
-# 2. Arrange the two plots horizontally side by side in 1 row 2 column grid
-par(mfrow = c(1, 2))
-# 3. Draw plots cleanly without messy captions
-# Residual vs Fitted plot
-plot(fit, 
-     which = 1, 
-     sub.caption = ""
-     )
-# QQ plot
-plot(fit,
-     which = 2, 
-     sub.caption = ""
-     )
-```
-```{r, fig.cap="Figure 1: Preliminary Multiple Linear Regression Plots."}
+abline(v = 0, col = "red", lwd = 2, lty = 2)
 ```
