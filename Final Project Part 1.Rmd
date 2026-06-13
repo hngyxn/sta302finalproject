@@ -117,11 +117,6 @@ plot(fit,
      )
 ```
 
-## Find p-values of coefficients
-```{r}
-vif(fit)
-```
-
 
 ## Box-Cox transformation
 ```{r}
@@ -141,11 +136,11 @@ print(optimal_lambda)
 library(car)
 newfit <- lm(
   Spotify.Streams^(1/3) ~
-    YouTube.Views+
-    YouTube.Likes+
-    TikTok.Posts+
-    TikTok.Likes+
-    TikTok.Views, 
+    log(YouTube.Views)  * Release.Decade +
+    log(YouTube.Likes)  * Release.Decade +
+    log(TikTok.Posts)   * Release.Decade +
+    log(TikTok.Likes)   * Release.Decade +
+    log(TikTok.Views)   * Release.Decade, 
   data = clean_data
 )
 
@@ -163,8 +158,6 @@ plot(newfit,
      which = 2, 
      sub.caption = ""
      )
-
-vif(newfit)
 # Best subset selection
 library(leaps)
 best_subset <- regsubsets(Spotify.Streams ~ YouTube.Views + YouTube.Likes + TikTok.Posts + TikTok.Likes + TikTok.Views + Release.Decade, data = clean_data, nvmax = 10, nbest = 1, really.big=TRUE, method="exhaustive")
@@ -172,6 +165,33 @@ par(mfrow=c(1,2))
 plot(best_subset, scale="adjr2");plot(best_subset, scale="bic")
 
 ```
+## Final Model Selection
+```{r}
+library(car)
+finalfit <- lm(
+  Spotify.Streams^(1/3) ~
+    log(YouTube.Likes)  * Release.Decade +
+    log(TikTok.Likes)   * Release.Decade +
+    log(TikTok.Views)   * Release.Decade, 
+  data = clean_data
+)
+
+summary(finalfit) # Get intercept/coefficients
+# 2. Arrange the two plots horizontally side by side in 1 row 2 column grid
+par(mfrow = c(1, 2))
+# 3. Draw plots cleanly without messy captions
+# Residual vs Fitted plot
+plot(finalfit, 
+     which = 1, 
+     sub.caption = ""
+     )
+# QQ plot
+plot(finalfit,
+     which = 2, 
+     sub.caption = ""
+     )
+```
+
 
 ```{r residual-plots-2, echo=FALSE, fig.height=6, fig.width=9, fig.align="center", fig.pos="H"}
 residuals_fit <- residuals(newfit)
