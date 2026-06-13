@@ -118,7 +118,7 @@ plot(fit,
 ```
 
 ## Model Selection
-```
+```{r}
 library(car)
 vif(fit)
 ```
