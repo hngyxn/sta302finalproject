@@ -121,6 +121,12 @@ plot(fit,
 ```{r}
 library(car)
 vif(fit)
+# Best subset selection
+library(leaps)
+best_subset <- regsubsets(Spotify.Streams ~ YouTube.Views + YouTube.Likes + TikTok.Posts + TikTok.Likes + TikTok.Views + Release.Decade, data = clean_data, nvmax = 10, nbest = 1, really.big=TRUE, method="exhaustive")
+par(mfrow=c(1,2))
+plot(best_subset, scale="adjr2");plot(best_subset, scale="bic")
+
 ```
 
 ```{r residual-plots-2, echo=FALSE, fig.height=6, fig.width=9, fig.align="center", fig.pos="H"}
