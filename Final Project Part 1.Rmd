@@ -117,6 +117,12 @@ plot(fit,
      )
 ```
 
+## Model Selection
+```
+library(car)
+vif(fit)
+```
+
 ```{r residual-plots-2, echo=FALSE, fig.height=6, fig.width=9, fig.align="center", fig.pos="H"}
 residuals_fit <- residuals(fit)
 predictors <- list(
