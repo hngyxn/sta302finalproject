@@ -145,6 +145,24 @@ newfit <- lm(
 )
 
 summary(newfit) # Get intercept/coefficients
+
+newfit_no_interaction <- lm(
+  Spotify.Streams^(1/3) ~
+    log(YouTube.Views) +
+    log(YouTube.Likes) +
+    log(TikTok.Posts)  +
+    log(TikTok.Likes) +
+    log(TikTok.Views) +
+    Release.Decade, 
+  data = clean_data
+)
+
+vif(newfit_no_interaction)
+
+summary(newfit_no_interaction)
+
+anova(newfit, newfit_no_interaction)
+
 # 2. Arrange the two plots horizontally side by side in 1 row 2 column grid
 par(mfrow = c(1, 2))
 # 3. Draw plots cleanly without messy captions
@@ -160,10 +178,14 @@ plot(newfit,
      )
 # Best subset selection
 library(leaps)
-best_subset <- regsubsets(Spotify.Streams ~ YouTube.Views + YouTube.Likes + TikTok.Posts + TikTok.Likes + TikTok.Views + Release.Decade, data = clean_data, nvmax = 10, nbest = 1, really.big=TRUE, method="exhaustive")
-par(mfrow=c(1,2))
-plot(best_subset, scale="adjr2");plot(best_subset, scale="bic")
 
+best_subset <- regsubsets(Spotify.Streams ~ YouTube.Views + YouTube.Likes + TikTok.Posts + TikTok.Likes + TikTok.Views + Release.Decade, data = clean_data, nvmax = 10, nbest = 1, really.big=TRUE, method="exhaustive")
+
+stepwise_regression <- regsubsets(Spotify.Streams ~ YouTube.Views + YouTube.Likes + TikTok.Posts + TikTok.Likes + TikTok.Views + Release.Decade, data = clean_data, nvmax = 10, nbest = 1, really.big=TRUE, method="seqrep")
+
+par(mfrow=c(1,2))
+
+plot(stepwise_regression,scale="adjr2");plot(stepwise_regression, scale="bic")
 ```
 ## Final Model Selection
 ```{r}
