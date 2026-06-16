@@ -1,6 +1,8 @@
 ---
-title: "STA302 Final Project Part 1"
-output: pdf_document
+title: "STA302 Final Project"
+output:
+  pdf_document:
+    latex_engine: xelatex
 ---
 
 
@@ -90,7 +92,7 @@ styled_table
 Below are the residual plots evaluating preliminary multiple linear regression
 model assumptions.
 
-```{r residual-plots, echo=FALSE, fig.height=4, fig.width=9}
+```{r residual-plots, echo=FALSE, results='hide', fig.height=4, fig.width=9}
 # 1. Fit correct model matching proposal text variables
 fit <- lm(
   Spotify.Streams ~
@@ -129,13 +131,12 @@ bc <- boxcox(fit)
 optimal_lambda <- bc$x[which.max(bc$y)]
 print(optimal_lambda)
 ```
-
-
 ## Model Selection
-```{r}
+```{r diagnostics-and-reduction, echo=FALSE, results='hide', fig.height=5, fig.width=9}
+# Identifying Leverage Points, Outliers, and Influential Points
 library(car)
-
-# Transformed model
+library(MASS)
+library(leaps)
 newfit <- lm(
   Spotify.Streams^(1/3) ~
     log(YouTube.Views)  * Release.Decade +
@@ -146,148 +147,6 @@ newfit <- lm(
   data = clean_data
 )
 
-summary(newfit) # Get intercept/coefficients
-
-# Transformed model with no interaction
-newfit_no_interaction <- lm(
-  Spotify.Streams^(1/3) ~
-    log(YouTube.Views) +
-    log(YouTube.Likes) +
-    log(TikTok.Posts)  +
-    log(TikTok.Likes) +
-    log(TikTok.Views) +
-    Release.Decade, 
-  data = clean_data
-)
-
-summary(newfit_no_interaction)
-
-anova(newfit, newfit_no_interaction)
-
-# Arrange the two plots horizontally side by side in 1 row 2 column grid
-par(mfrow = c(1, 2))
-# Draw plots cleanly without messy captions
-# Residual vs Fitted plot
-plot(newfit, 
-     which = 1, 
-     sub.caption = ""
-     )
-# QQ plot
-plot(newfit,
-     which = 2, 
-     sub.caption = ""
-     )
-# Best subset selection
-library(leaps)
-
-best_subset <- regsubsets(Spotify.Streams ~ YouTube.Views + YouTube.Likes + TikTok.Posts + TikTok.Likes + TikTok.Views + Release.Decade, data = clean_data, nvmax = 10, nbest = 1, really.big=TRUE, method="exhaustive")
-
-par(mfrow=c(1,2))
-
-plot(best_subset,scale="adjr2");plot(best_subset, scale="bic")
-
-# Reduced model from best subset selection
-best_subset_fit <- lm(
-  Spotify.Streams^(1/3) ~
-    log(YouTube.Likes) +
-    log(TikTok.Views) +
-    log(TikTok.Likes) +
-    Release.Decade, 
-  data = clean_data
-)
-
-vif(best_subset_fit)
-
-# Determine whether to drop TikTok views or TikTok Likes
-fit_views <- lm(
-  Spotify.Streams^(1/3) ~
-    log(YouTube.Likes) +
-    log(TikTok.Views) +
-    Release.Decade, 
-  data = clean_data_reduced
-)
-
-fit_likes <- lm(
-  Spotify.Streams^(1/3) ~
-    log(YouTube.Likes) +
-    log(TikTok.Likes) +
-    Release.Decade, 
-  data = clean_data_reduced
-)
-
-AIC(fit_views, fit_likes)
-BIC(fit_views, fit_likes)
-summary(fit_views)$adj.r.squared
-summary(fit_likes)$adj.r.squared
-```
-## Final Model Selection
-```{r}
-library(car)
-finalfit <- lm(
-  Spotify.Streams^(1/3) ~
-    log(YouTube.Likes)  * Release.Decade +
-    log(TikTok.Likes)   * Release.Decade +
-    log(TikTok.Views)   * Release.Decade, 
-  data = clean_data
-)
-
-summary(finalfit) # Get intercept/coefficients
-# 2. Arrange the two plots horizontally side by side in 1 row 2 column grid
-par(mfrow = c(1, 2))
-# 3. Draw plots cleanly without messy captions
-# Residual vs Fitted plot
-plot(finalfit, 
-     which = 1, 
-     sub.caption = ""
-     )
-# QQ plot
-plot(finalfit,
-     which = 2, 
-     sub.caption = ""
-     )
-```
-
-
-```{r residual-plots-2, echo=FALSE, fig.height=6, fig.width=9, fig.align="center", fig.pos="H"}
-residuals_fit <- residuals(newfit)
-predictors <- list(
-  "YouTube Views"  = clean_data$YouTube.Views,
-  "YouTube Likes"  = clean_data$YouTube.Likes,
-  "TikTok Posts"   = clean_data$TikTok.Posts,
-  "TikTok Likes"   = clean_data$TikTok.Likes,
-  "TikTok Views"   = clean_data$TikTok.Views
-)
-
-par(mfrow = c(2, 3))
-
-for (name in names(predictors)) {
-  x <- predictors[[name]]
-  plot(
-    x, residuals_fit,
-    main  = paste("Residuals vs\n", name),
-    xlab  = name,
-    ylab  = "Residuals",
-    pch   = 20,
-    cex   = 0.5,
-    col   = rgb(0, 0, 0, 0.3)
-  )
-  abline(h = 0, col = "gray", lwd = 1, lty = 2)
-  lines(lowess(x, residuals_fit), col = "red", lwd = 1.5)
-}
-
-hist(
-  residuals_fit,
-  breaks = 50,
-  main   = "Histogram of Residuals",
-  xlab   = "Residuals",
-  col    = "lightgray",
-  border = "white"
-)
-abline(v = 0, col = "red", lwd = 2, lty = 2)
-```
-
-## Identifying Leverage Points, Outliers, and Influential Points
-```{r}
 n <- nrow(clean_data)
 p <- length(coef(newfit)) - 1  # number of predictors (excluding intercept)
 
@@ -298,7 +157,7 @@ leverage_points <- which(hat_values > lev_threshold)
 cat("Leverage threshold:", lev_threshold, "\n")
 cat("Number of leverage points:", length(leverage_points), "\n")
 
-# Outliers (Standarized Residuals)
+# Outliers (Standardized Residuals)
 stan_resid <- rstandard(newfit)
 outlier_threshold <- 4
 outliers <- which(abs(stan_resid) > outlier_threshold)
@@ -369,4 +228,145 @@ removed_points <- clean_data[influential_all, ]
 # Inspect relevant columns for each removed point
 removed_points[, c("Track", "Artist", "Release.Date", "Spotify.Streams",
                    "YouTube.Likes", "TikTok.Likes", "TikTok.Views", "Release.Decade")]
+```
+
+```{r variable-selection-evaluation, echo=FALSE, results='hide', fig.height=4, fig.width=9}
+
+summary(newfit) # Get intercept/coefficients
+
+# Transformed model with no interaction
+newfit_no_interaction <- lm(
+  Spotify.Streams^(1/3) ~
+    log(YouTube.Views) +
+    log(YouTube.Likes) +
+    log(TikTok.Posts)  +
+    log(TikTok.Likes) +
+    log(TikTok.Views) +
+    Release.Decade, 
+  data = clean_data
+)
+
+summary(newfit_no_interaction)
+
+anova(newfit, newfit_no_interaction)
+
+# Arrange the two plots horizontally side by side in 1 row 2 column grid
+par(mfrow = c(1, 2))
+# Draw plots cleanly without messy captions
+# Residual vs Fitted plot
+plot(newfit, 
+     which = 1, 
+     sub.caption = ""
+     )
+# QQ plot
+plot(newfit,
+     which = 2, 
+     sub.caption = ""
+     )
+# Best subset selection
+
+best_subset <- regsubsets(Spotify.Streams ~ YouTube.Views + YouTube.Likes + TikTok.Posts + TikTok.Likes + TikTok.Views + Release.Decade, data = clean_data, nvmax = 10, nbest = 1, really.big=TRUE, method="exhaustive")
+
+par(mfrow=c(1,2))
+
+plot(best_subset,scale="adjr2");plot(best_subset, scale="bic")
+
+# Reduced model from best subset selection
+best_subset_fit <- lm(
+  Spotify.Streams^(1/3) ~
+    log(YouTube.Likes) +
+    log(TikTok.Views) +
+    log(TikTok.Likes) +
+    Release.Decade, 
+  data = clean_data
+)
+
+vif(best_subset_fit)
+
+# Determine whether to drop TikTok views or TikTok Likes
+fit_views <- lm(
+  Spotify.Streams^(1/3) ~
+    log(YouTube.Likes) +
+    log(TikTok.Views) +
+    Release.Decade, 
+  data = clean_data_reduced
+)
+
+fit_likes <- lm(
+  Spotify.Streams^(1/3) ~
+    log(YouTube.Likes) +
+    log(TikTok.Likes) +
+    Release.Decade, 
+  data = clean_data_reduced
+)
+
+AIC(fit_views, fit_likes)
+BIC(fit_views, fit_likes)
+summary(fit_views)$adj.r.squared
+summary(fit_likes)$adj.r.squared
+```
+
+## Final Model Selection
+```{r final-model-fit, echo=FALSE, results='hide', fig.height=4, fig.width=9}
+finalfit <- lm(
+  Spotify.Streams^(1/3) ~
+    log(YouTube.Likes) +
+    log(TikTok.Likes) +
+    Release.Decade, 
+  data = clean_data_reduced
+)
+
+summary(finalfit) # Get intercept/coefficients
+# 2. Arrange the two plots horizontally side by side in 1 row 2 column grid
+par(mfrow = c(1, 2))
+# 3. Draw plots cleanly without messy captions
+# Residual vs Fitted plot
+plot(finalfit, 
+     which = 1, 
+     sub.caption = ""
+     )
+# QQ plot
+plot(finalfit,
+     which = 2, 
+     sub.caption = ""
+     )
+```
+
+
+```{r residual-plots-2, echo=FALSE, fig.height=6, fig.width=9, fig.align="center", fig.pos="H"}
+residuals_fit <- residuals(newfit)
+predictors <- list(
+  "YouTube Views"  = clean_data$YouTube.Views,
+  "YouTube Likes"  = clean_data$YouTube.Likes,
+  "TikTok Posts"   = clean_data$TikTok.Posts,
+  "TikTok Likes"   = clean_data$TikTok.Likes,
+  "TikTok Views"   = clean_data$TikTok.Views
+)
+
+par(mfrow = c(2, 3))
+
+for (name in names(predictors)) {
+  x <- predictors[[name]]
+  plot(
+    x, residuals_fit,
+    main  = paste("Residuals vs\n", name),
+    xlab  = name,
+    ylab  = "Residuals",
+    pch   = 20,
+    cex   = 0.5,
+    col   = rgb(0, 0, 0, 0.3)
+  )
+  abline(h = 0, col = "gray", lwd = 1, lty = 2)
+  lines(lowess(x, residuals_fit), col = "red", lwd = 1.5)
+}
+
+hist(
+  residuals_fit,
+  breaks = 50,
+  main   = "Histogram of Residuals",
+  xlab   = "Residuals",
+  col    = "lightgray",
+  border = "white"
+)
+abline(v = 0, col = "red", lwd = 2, lty = 2)
 ```
