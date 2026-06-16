@@ -252,3 +252,81 @@ hist(
 )
 abline(v = 0, col = "red", lwd = 2, lty = 2)
 ```
+
+## Identifying Leverage Points, Outliers, and Influential Points
+```{r}
+n <- nrow(clean_data)
+p <- length(coef(newfit)) - 1  # number of predictors (excluding intercept)
+
+# Leverage Points
+hat_values <- hatvalues(newfit)
+lev_threshold <- 2 * (p + 1) / n
+leverage_points <- which(hat_values > lev_threshold)
+cat("Leverage threshold:", lev_threshold, "\n")
+cat("Number of leverage points:", length(leverage_points), "\n")
+
+# Outliers (Standarized Residuals)
+stan_resid <- rstandard(newfit)
+outlier_threshold <- 4
+outliers <- which(abs(stan_resid) > outlier_threshold)
+cat("\nOutlier threshold (|standardized residual| >", outlier_threshold, ")\n")
+cat("Number of outliers:", length(outliers), "\n")
+
+# Cook's Distance
+cooks <- cooks.distance(newfit)
+cooks_threshold <- 4 / n
+influential_cooks <- which(cooks > cooks_threshold)
+cat("\nCook's Distance threshold:", cooks_threshold, "\n")
+cat("Number of influential points (Cook's D):", length(influential_cooks), "\n")
+
+# DFFITS
+dffits_vals <- dffits(newfit)
+dffits_threshold <- 2 * sqrt((p + 1) / n)
+influential_dffits <- which(abs(dffits_vals) > dffits_threshold)
+cat("\nDFFITS threshold:", dffits_threshold, "\n")
+cat("Number of influential points (DFFITS):", length(influential_dffits), "\n")
+
+# DFBETAS
+dfbetas_vals <- dfbetas(newfit)
+dfbetas_threshold <- 2 / sqrt(n)
+# Flag any observation that exceeds the threshold for ANY coefficient
+influential_dfbetas <- which(apply(abs(dfbetas_vals) > dfbetas_threshold, 1, any))
+cat("\nDFBETAS threshold:", dfbetas_threshold, "\n")
+cat("Number of influential points (DFBETAS):", length(influential_dfbetas), "\n")
+
+# Summary: Points flagged by all three influence measures
+influential_all <- Reduce(intersect, list(influential_cooks, influential_dffits, influential_dfbetas))
+cat("\nPoints flagged by Cook's D, DFFITS, and DFBETAS:", length(influential_all), "\n")
+
+# Refit without most serious influential points
+clean_data_reduced <- clean_data[-influential_all, ]
+
+newfit_reduced <- lm(  
+  Spotify.Streams^(1/3) ~
+    log(YouTube.Views)  * Release.Decade +
+    log(YouTube.Likes)  * Release.Decade +
+    log(TikTok.Posts)   * Release.Decade +
+    log(TikTok.Likes)   * Release.Decade +
+    log(TikTok.Views)   * Release.Decade, 
+  data = clean_data_reduced
+)
+
+# Compare refitted model and previous model (with influential points)
+par(mfrow = c(2, 2))
+plot(newfit,         which = 1, main = "Original",      sub.caption = "")
+plot(newfit_reduced, which = 1, main = "Reduced",        sub.caption = "")
+plot(newfit,         which = 2, main = "Original",      sub.caption = "")
+plot(newfit_reduced, which = 2, main = "Reduced",        sub.caption = "")
+
+AIC(newfit, newfit_reduced)
+BIC(newfit, newfit_reduced)
+
+# Adjusted R-squared and RSE side by side
+cat("--- Original Model ---\n")
+cat("Adj. R-squared:", summary(newfit)$adj.r.squared, "\n")
+cat("RSE:", summary(newfit)$sigma, "\n")
+
+cat("\n--- Reduced Model ---\n")
+cat("Adj. R-squared:", summary(newfit_reduced)$adj.r.squared, "\n")
+cat("RSE:", summary(newfit_reduced)$sigma, "\n")
+```
