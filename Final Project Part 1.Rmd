@@ -362,4 +362,11 @@ cat("RSE:", summary(newfit)$sigma, "\n")
 cat("\n--- Reduced Model ---\n")
 cat("Adj. R-squared:", summary(newfit_reduced)$adj.r.squared, "\n")
 cat("RSE:", summary(newfit_reduced)$sigma, "\n")
+
+# Extract removed rows
+removed_points <- clean_data[influential_all, ]
+
+# Inspect relevant columns for each removed point
+removed_points[, c("Track", "Artist", "Release.Date", "Spotify.Streams",
+                   "YouTube.Likes", "TikTok.Likes", "TikTok.Views", "Release.Decade")]
 ```
