@@ -134,6 +134,8 @@ print(optimal_lambda)
 ## Model Selection
 ```{r}
 library(car)
+
+# Transformed model
 newfit <- lm(
   Spotify.Streams^(1/3) ~
     log(YouTube.Views)  * Release.Decade +
@@ -146,6 +148,7 @@ newfit <- lm(
 
 summary(newfit) # Get intercept/coefficients
 
+# Transformed model with no interaction
 newfit_no_interaction <- lm(
   Spotify.Streams^(1/3) ~
     log(YouTube.Views) +
@@ -157,15 +160,13 @@ newfit_no_interaction <- lm(
   data = clean_data
 )
 
-vif(newfit_no_interaction)
-
 summary(newfit_no_interaction)
 
 anova(newfit, newfit_no_interaction)
 
-# 2. Arrange the two plots horizontally side by side in 1 row 2 column grid
+# Arrange the two plots horizontally side by side in 1 row 2 column grid
 par(mfrow = c(1, 2))
-# 3. Draw plots cleanly without messy captions
+# Draw plots cleanly without messy captions
 # Residual vs Fitted plot
 plot(newfit, 
      which = 1, 
@@ -181,11 +182,43 @@ library(leaps)
 
 best_subset <- regsubsets(Spotify.Streams ~ YouTube.Views + YouTube.Likes + TikTok.Posts + TikTok.Likes + TikTok.Views + Release.Decade, data = clean_data, nvmax = 10, nbest = 1, really.big=TRUE, method="exhaustive")
 
-stepwise_regression <- regsubsets(Spotify.Streams ~ YouTube.Views + YouTube.Likes + TikTok.Posts + TikTok.Likes + TikTok.Views + Release.Decade, data = clean_data, nvmax = 10, nbest = 1, really.big=TRUE, method="seqrep")
-
 par(mfrow=c(1,2))
 
-plot(stepwise_regression,scale="adjr2");plot(stepwise_regression, scale="bic")
+plot(best_subset,scale="adjr2");plot(best_subset, scale="bic")
+
+# Reduced model from best subset selection
+best_subset_fit <- lm(
+  Spotify.Streams^(1/3) ~
+    log(YouTube.Likes) +
+    log(TikTok.Views) +
+    log(TikTok.Likes) +
+    Release.Decade, 
+  data = clean_data
+)
+
+vif(best_subset_fit)
+
+# Determine whether to drop TikTok views or TikTok Likes
+fit_views <- lm(
+  Spotify.Streams^(1/3) ~
+    log(YouTube.Likes) +
+    log(TikTok.Views) +
+    Release.Decade, 
+  data = clean_data_reduced
+)
+
+fit_likes <- lm(
+  Spotify.Streams^(1/3) ~
+    log(YouTube.Likes) +
+    log(TikTok.Likes) +
+    Release.Decade, 
+  data = clean_data_reduced
+)
+
+AIC(fit_views, fit_likes)
+BIC(fit_views, fit_likes)
+summary(fit_views)$adj.r.squared
+summary(fit_likes)$adj.r.squared
 ```
 ## Final Model Selection
 ```{r}
