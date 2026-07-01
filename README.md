@@ -1,6 +1,6 @@
 # STA302 Final Project: Cross-Platform Music Promotion Analysis
 
-## Final Grade: 40/40
+## Final Grade: 100%
 
 ## Overview
 This repository contains the code and formal report for our STA302 Final Project. We investigate the relationship between a song's accumulated Spotify streams and its engagement metrics on TikTok and YouTube, and analyze how this relationship significantly differs across various release decades.
